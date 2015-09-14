@@ -36,6 +36,8 @@ object Build extends Build {
     description := "",
     updateOptions := updateOptions.value withCachedResolution true,
     scalaVersion := "2.11.7",
+    homepage := Some(new URL("https://github.com/sonenko/logical-parser")),
+    startYear := Some(2015),
     cancelable in Global := true,
     scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature", "-Xlog-reflective-calls", "-Xfuture", "-Xlint"),
     testOptions in Test := Seq(Tests.Filter(x => x.endsWith("Test"))),
