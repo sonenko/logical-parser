@@ -29,8 +29,7 @@ object Build extends Build {
         </developers>),
     publishMavenStyle := true,
     publishArtifact in Test := false,
-    pomIncludeRepository := { _ => false },
-    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+    pomIncludeRepository := { _ => false }
   )
 
   val commonSettings = Seq(
@@ -52,5 +51,5 @@ object Build extends Build {
       typesafe.config, scalaParserCombinators,
       tests.specs2, tests.mockito
     ))
-    .settings(commonSettings ++ releaseSettings ++ mSettings:_*)
+    .settings(commonSettings ++ Defaults.defaultSettings ++ releaseSettings ++ mSettings:_*)
 }
