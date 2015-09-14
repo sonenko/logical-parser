@@ -1,5 +1,5 @@
 ## about
-Parser from "`x` > 2" to case classes tree
+Parser from ``` `x` > 2``` to case classes tree
 
 #### usage examples
 ```
