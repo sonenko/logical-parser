@@ -1,0 +1,10 @@
+target/
+projectFilesBackup
+project/target/**
+.DS_Store
+.idea*
+.java-version
+
+# web
+#user defined conf
+application.conf
