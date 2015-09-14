@@ -37,6 +37,7 @@ object Build extends Build {
     description := "",
     updateOptions := updateOptions.value withCachedResolution true,
     scalaVersion := "2.11.7",
+    licenses := Seq(("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
     homepage := Some(new URL("https://github.com/sonenko/logical-parser")),
     startYear := Some(2015),
     cancelable in Global := true,
