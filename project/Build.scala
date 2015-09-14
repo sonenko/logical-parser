@@ -51,5 +51,5 @@ object Build extends Build {
       typesafe.config, scalaParserCombinators,
       tests.specs2, tests.mockito
     ))
-    .settings(commonSettings ++ Defaults.defaultSettings ++ releaseSettings ++ mSettings:_*)
+    .settings(commonSettings ++ releaseSettings ++ mSettings:_*)
 }
