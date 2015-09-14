@@ -18,7 +18,7 @@ object Build extends Build {
     cancelable in Global := true,
     scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8", "-feature", "-Xlog-reflective-calls", "-Xfuture", "-Xlint"),
     testOptions in Test := Seq(Tests.Filter(x => x.endsWith("Test"))),
-    parallelExecution in Test := false
+    parallelExecution in Test := true
   )
 
   lazy val scratch = (project in file("."))
