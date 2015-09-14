@@ -1,14 +1,35 @@
 import sbt._, Keys._
 import Dependencies._
+import sbtrelease.ReleasePlugin._
 
 object Build extends Build {
 
-  val publishSettings = Seq(
+  lazy val publishSettings = publishTo <<= version.apply {
+    v =>
+      val nexus = "https://oss.sonatype.org/"
+      if (v.trim.endsWith("SNAPSHOT"))
+        Some("snapshots" at nexus + "content/repositories/snapshots")
+      else
+        Some("staging" at nexus + "service/local/staging/deploy/maven2")
+  }
+
+  lazy val mSettings = Seq(
+    publishSettings,
+    pomExtra := (
+      <scm>
+        <url>git@github.com:sonenko/logical-parser.git</url>
+        <connection>scm:git:git@github.com:sonenko/logical-parser.git</connection>
+      </scm>
+        <developers>
+          <developer>
+            <id>sonenko</id>
+            <name>Onenko Sergiy</name>
+            <email>growler.ua@gmail.com</email>
+          </developer>
+        </developers>),
     publishMavenStyle := true,
-    publishArtifact in (Compile, packageDoc) := false,
-    publishArtifact in (Compile, packageSrc) := true,
-    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
-  )
+    publishArtifact in Test := false,
+    pomIncludeRepository := { _ => false })
 
   val commonSettings = Seq(
     organization := "com.github.sonenko",
@@ -21,11 +42,11 @@ object Build extends Build {
     parallelExecution in Test := true
   )
 
-  lazy val scratch = (project in file("."))
+  lazy val parser = (project in file("."))
     .settings(libraryDependencies ++= Seq(
       log.logback, log.scalaloggingSlf4j, log.jclOverSlf4j, log.julToSlf4j, log.log4jOverSlf4j, log.slf4jApi,
       typesafe.config, scalaParserCombinators,
       tests.specs2, tests.mockito
     ))
-    .settings(commonSettings:_*)
+    .settings(commonSettings ++ releaseSettings ++ mSettings:_*)
 }
