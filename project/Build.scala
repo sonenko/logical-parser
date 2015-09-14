@@ -29,7 +29,9 @@ object Build extends Build {
         </developers>),
     publishMavenStyle := true,
     publishArtifact in Test := false,
-    pomIncludeRepository := { _ => false })
+    pomIncludeRepository := { _ => false },
+    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+  )
 
   val commonSettings = Seq(
     organization := "com.github.sonenko",
