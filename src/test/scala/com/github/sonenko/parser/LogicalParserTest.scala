@@ -32,42 +32,6 @@ class LogicalParserTest extends Specification {
       testRegOk("`asd.123.___`")
     }
   }
-
-  "stringValueReg" should {
-    "hate incorrect values" in new TestScope {
-      implicit val reg = LogicalParser.stringValueReg
-      testRegHate(""" " """)
-      testRegHate(""" """)
-      testRegHate("""asd""")
-      testRegHate("""123""")
-    }
-    "satisfy correct field values" in new TestScope {
-      implicit val reg = LogicalParser.stringValueReg
-      testRegOk(""""a"""")
-      testRegOk("""""""")
-      testRegOk(""""hello world"""")
-      testRegOk(""""BIG \"Theatre\" """")
-    }
-  }
-
-  "numberValueReq" should {
-    "hate incorrect values" in new TestScope {
-      implicit val reg = LogicalParser.numberValueReg
-      testRegHate("""""")
-      testRegHate(""" """)
-      testRegHate(""" " """)
-      testRegHate(""" \" """)
-    }
-    "satisfy correct field values" in new TestScope {
-      implicit val reg = LogicalParser.numberValueReg
-      testRegOk("""1""")
-      testRegOk("""0""")
-      testRegOk("""-1""")
-      testRegOk("""1.1""")
-      testRegOk("""1.0""")
-      testRegOk("""-0.0123""")
-    }
-  }
   
   "eqReg" should {
     "hate incorrect values" in new TestScope {
@@ -92,7 +56,7 @@ class LogicalParserTest extends Specification {
   "toTree" should {
     "work in happy case" in {
       LogicalParser.toTree("").get shouldEqual Empty
-      LogicalParser.toTree("`x` == 20").get shouldEqual Expression("x", Eq, 20.0)
+      LogicalParser.toTree("""`x` == 20.1""").get shouldEqual Expression("x", Eq, 20.1)
       LogicalParser.toTree("""`x` == "20.0"""").get shouldEqual Expression("x", Eq, "20.0")
       LogicalParser.toTree("""`x` == "" """).get shouldEqual Expression("x", Eq, "")
       LogicalParser.toTree("""`x` == 1 AND `y` != 2 """).get shouldEqual 
@@ -124,18 +88,18 @@ class LogicalParserTest extends Specification {
       // `x` != 1 AND (`y` < 2 OR `x` <= 2) AND `y` > 3
       // same as
       // ((`y` < 2 OR `x` <= 2) AND `x` != 1) AND `y` > 3
-      LogicalParser.toTree("""`x` != 1 AND (`y` < 2 OR `x` <= 2) AND `y` > 3""").get shouldEqual
+      LogicalParser.toTree("""`x` != 1 AND (`y` < 2 OR `x` <= 2) AND `y` > 3.14""").get shouldEqual
         Leaf(
           Leaf(
-            Expression("x", Ne, 1.0), 
+            Expression("x", Ne, 1), 
             Leaf(
-              Expression("y", Lt, 2.0), 
-              Expression("x", Lte, 2.0), 
+              Expression("y", Lt, 2), 
+              Expression("x", Lte, 2), 
               Or
             ), 
             And
           ), 
-          Expression("y", Gt, 3.0), And
+          Expression("y", Gt, 3.14), And
         )
     }
   }

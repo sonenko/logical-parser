@@ -25,14 +25,13 @@ case object Empty extends Tree
 case class Expression[T](field: String, eqOp: EqOp, value: T) extends Tree
 case class Leaf(left: Tree, right: Tree, andOr: AndOr) extends Tree
 
-object LogicalParser extends RegexParsers {
+object LogicalParser extends RegexParsers with JavaTokenParsers{
   
   def fieldNameReg: Regex = """`\w+(?:\.\w+)?(?:\.\w+)?(?:\.\w+)?(?:\.\w+)?`""".r
   def fieldName: Parser[String] = fieldNameReg ^^ {x => x.slice(1, x.length - 1)}
-  def stringValueReg = """(["'])((\\{2})*|(.*?[^\\](\\{2})*))\1""".r
-  def stringValue: Parser[String] = stringValueReg ^^ {x => x.slice(1, x.length - 1)}
-  def numberValueReg = """-?\d+(?:\.\d+)?""".r
-  def numberValue: Parser[Double] = numberValueReg ^^ {_.toDouble}
+  def stringValue = stringLiteral ^^ {x => x.slice(1, x.length - 1)}
+  def doubleValue: Parser[Double] = decimalNumber ^^ {_.toDouble}
+  def longValue: Parser[Long] = wholeNumber ^^ {_.toLong}
   def eqReg = """(==)|(!=)|(<=)|(>=)|(<)|(>)""".r
   def eq: Parser[EqOp] = eqReg ^^ EqOp.withName
   def or : Parser[AndOr]= """(?i)(OR)""".r ^^ (x => Or)
@@ -52,7 +51,7 @@ object LogicalParser extends RegexParsers {
 
   def bracketsStep: Parser[Tree] = expStep | "(" ~> orStep <~ ")" | ("^$".r ^^ (_ => Empty))
   
-  def expStep = (fieldName ~ eq ~ (stringValue | numberValue)) ^^ {
+  def expStep = (fieldName ~ eq ~ (stringValue | doubleValue | longValue)) ^^ {
     case field ~ eq ~ value => Expression(field = field, eqOp = eq, value = value)
   }
   def toTree(str: String): ParseResult[Tree] = parseAll(orStep, str)
