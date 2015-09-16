@@ -30,7 +30,7 @@ object LogicalParser extends RegexParsers with JavaTokenParsers{
   def fieldNameReg: Regex = """`\w+(?:\.\w+)?(?:\.\w+)?(?:\.\w+)?(?:\.\w+)?`""".r
   def fieldName: Parser[String] = fieldNameReg ^^ {x => x.slice(1, x.length - 1)}
   def stringValue = stringLiteral ^^ {x => x.slice(1, x.length - 1)}
-  def doubleValue: Parser[Double] = decimalNumber ^^ {_.toDouble}
+  def doubleValue: Parser[Double] = """(\d+\.\d+)""".r ^^ {_.toDouble}
   def longValue: Parser[Long] = wholeNumber ^^ {_.toLong}
   def eqReg = """(==)|(!=)|(<=)|(>=)|(<)|(>)""".r
   def eq: Parser[EqOp] = eqReg ^^ EqOp.withName
