@@ -55,23 +55,23 @@ class LogicalParserTest extends Specification {
   
   "toTree" should {
     "work in happy case" in {
-      LogicalParser.toTree("").get shouldEqual Empty
-      LogicalParser.toTree("""`x` == 20.1""").get shouldEqual BinaryExpr("x", Eq, 20.1)
-      LogicalParser.toTree("""`x` == "20.0"""").get shouldEqual BinaryExpr("x", Eq, "20.0")
-      LogicalParser.toTree("""`x` == "" """).get shouldEqual BinaryExpr("x", Eq, "")
-      LogicalParser.toTree("""`x` == 1 AND `y` != 2 """).get shouldEqual 
+      LogicalParser.toStructures("").get shouldEqual Empty
+      LogicalParser.toStructures("""`x` == 20.1""").get shouldEqual BinaryExpr("x", Eq, 20.1)
+      LogicalParser.toStructures("""`x` == "20.0"""").get shouldEqual BinaryExpr("x", Eq, "20.0")
+      LogicalParser.toStructures("""`x` == "" """).get shouldEqual BinaryExpr("x", Eq, "")
+      LogicalParser.toStructures("""`x` == 1 AND `y` != 2 """).get shouldEqual 
         CompositeExpr(
           BinaryExpr("x", Eq, 1),
           BinaryExpr("y", Ne, 2),
           And
         )
-      LogicalParser.toTree("""`x` == 1 AND `y` != 2 """).get shouldEqual
+      LogicalParser.toStructures("""`x` == 1 AND `y` != 2 """).get shouldEqual
         CompositeExpr(
           BinaryExpr("x", Eq, 1),
           BinaryExpr("y", Ne, 2),
           And
         )
-      LogicalParser.toTree("""`x` != 1 AND `y` < 2 OR `x` <= 2 AND `y` > 3""").get shouldEqual
+      LogicalParser.toStructures("""`x` != 1 AND `y` < 2 OR `x` <= 2 AND `y` > 3""").get shouldEqual
         CompositeExpr(
           CompositeExpr(
             BinaryExpr("x", Ne, 1),
@@ -88,7 +88,7 @@ class LogicalParserTest extends Specification {
       // `x` != 1 AND (`y` < 2 OR `x` <= 2) AND `y` > 3
       // same as
       // ((`y` < 2 OR `x` <= 2) AND `x` != 1) AND `y` > 3
-      LogicalParser.toTree("""`x` != 1 AND (`y` < 2 OR `x` <= 2) AND `y` > 3.14""").get shouldEqual
+      LogicalParser.toStructures("""`x` != 1 AND (`y` < 2 OR `x` <= 2) AND `y` > 3.14""").get shouldEqual
         CompositeExpr(
           CompositeExpr(
             BinaryExpr("x", Ne, 1), 

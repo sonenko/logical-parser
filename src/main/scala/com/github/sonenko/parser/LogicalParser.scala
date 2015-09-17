@@ -54,5 +54,5 @@ object LogicalParser extends RegexParsers with JavaTokenParsers {
   def expStep = (fieldName ~ eq ~ (stringValue | doubleValue | longValue)) ^^ {
     case field ~ eq ~ value => BinaryExpr(field = field, eqOp = eq, value = value)
   }
-  def toTree(str: String): ParseResult[Expr] = parseAll(orStep, str)
+  def toStructures(str: String): ParseResult[Expr] = parseAll(orStep, str)
 }
