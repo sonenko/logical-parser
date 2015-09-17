@@ -20,12 +20,12 @@ sealed trait AndOr
 case object And extends AndOr
 case object Or extends AndOr
 
-sealed trait Tree
-case object Empty extends Tree
-case class Expression[T](field: String, eqOp: EqOp, value: T) extends Tree
-case class Leaf(left: Tree, right: Tree, andOr: AndOr) extends Tree
+sealed trait Expr
+case object Empty extends Expr
+case class BinaryExpr[T](field: String, eqOp: EqOp, value: T) extends Expr
+case class CompositeExpr(left: Expr, right: Expr, andOr: AndOr) extends Expr
 
-object LogicalParser extends RegexParsers with JavaTokenParsers{
+object LogicalParser extends RegexParsers with JavaTokenParsers {
   
   def fieldNameReg: Regex = """`\w+(?:\.\w+)?(?:\.\w+)?(?:\.\w+)?(?:\.\w+)?`""".r
   def fieldName: Parser[String] = fieldNameReg ^^ {x => x.slice(1, x.length - 1)}
@@ -37,22 +37,22 @@ object LogicalParser extends RegexParsers with JavaTokenParsers{
   def or : Parser[AndOr]= """(?i)(OR)""".r ^^ (x => Or)
   def and : Parser[AndOr]= """(?i)(AND)""".r ^^ (x => And)
   
-  def orStep: Parser[Tree] = andStep ~ rep(or ~ andStep) ^^ {
+  def orStep: Parser[Expr] = andStep ~ rep(or ~ andStep) ^^ {
     case f1 ~ fs => (f1 /: fs){
-      case (acc, x) => Leaf(acc, x._2, x._1)
+      case (acc, x) => CompositeExpr(acc, x._2, x._1)
     }
   }
 
-  def andStep: Parser[Tree] = bracketsStep ~ rep(and ~ bracketsStep) ^^ {
+  def andStep: Parser[Expr] = bracketsStep ~ rep(and ~ bracketsStep) ^^ {
     case f1 ~ fs => (f1 /: fs){
-      case (acc, x) => Leaf(acc, x._2, x._1)
+      case (acc, x) => CompositeExpr(acc, x._2, x._1)
     }
   }
 
-  def bracketsStep: Parser[Tree] = expStep | "(" ~> orStep <~ ")" | ("^$".r ^^ (_ => Empty))
+  def bracketsStep: Parser[Expr] = expStep | "(" ~> orStep <~ ")" | ("^$".r ^^ (_ => Empty))
   
   def expStep = (fieldName ~ eq ~ (stringValue | doubleValue | longValue)) ^^ {
-    case field ~ eq ~ value => Expression(field = field, eqOp = eq, value = value)
+    case field ~ eq ~ value => BinaryExpr(field = field, eqOp = eq, value = value)
   }
-  def toTree(str: String): ParseResult[Tree] = parseAll(orStep, str)
+  def toTree(str: String): ParseResult[Expr] = parseAll(orStep, str)
 }

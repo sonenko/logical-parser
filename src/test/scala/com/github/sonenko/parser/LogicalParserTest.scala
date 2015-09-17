@@ -56,31 +56,31 @@ class LogicalParserTest extends Specification {
   "toTree" should {
     "work in happy case" in {
       LogicalParser.toTree("").get shouldEqual Empty
-      LogicalParser.toTree("""`x` == 20.1""").get shouldEqual Expression("x", Eq, 20.1)
-      LogicalParser.toTree("""`x` == "20.0"""").get shouldEqual Expression("x", Eq, "20.0")
-      LogicalParser.toTree("""`x` == "" """).get shouldEqual Expression("x", Eq, "")
+      LogicalParser.toTree("""`x` == 20.1""").get shouldEqual BinaryExpr("x", Eq, 20.1)
+      LogicalParser.toTree("""`x` == "20.0"""").get shouldEqual BinaryExpr("x", Eq, "20.0")
+      LogicalParser.toTree("""`x` == "" """).get shouldEqual BinaryExpr("x", Eq, "")
       LogicalParser.toTree("""`x` == 1 AND `y` != 2 """).get shouldEqual 
-        Leaf(
-          Expression("x", Eq, 1),
-          Expression("y", Ne, 2),
+        CompositeExpr(
+          BinaryExpr("x", Eq, 1),
+          BinaryExpr("y", Ne, 2),
           And
         )
       LogicalParser.toTree("""`x` == 1 AND `y` != 2 """).get shouldEqual
-        Leaf(
-          Expression("x", Eq, 1),
-          Expression("y", Ne, 2),
+        CompositeExpr(
+          BinaryExpr("x", Eq, 1),
+          BinaryExpr("y", Ne, 2),
           And
         )
       LogicalParser.toTree("""`x` != 1 AND `y` < 2 OR `x` <= 2 AND `y` > 3""").get shouldEqual
-        Leaf(
-          Leaf(
-            Expression("x", Ne, 1),
-            Expression("y", Lt, 2),
+        CompositeExpr(
+          CompositeExpr(
+            BinaryExpr("x", Ne, 1),
+            BinaryExpr("y", Lt, 2),
             And
           ),
-          Leaf(
-            Expression("x", Lte, 2),
-            Expression("y", Gt, 3),
+          CompositeExpr(
+            BinaryExpr("x", Lte, 2),
+            BinaryExpr("y", Gt, 3),
             And
           ),
           Or
@@ -89,17 +89,17 @@ class LogicalParserTest extends Specification {
       // same as
       // ((`y` < 2 OR `x` <= 2) AND `x` != 1) AND `y` > 3
       LogicalParser.toTree("""`x` != 1 AND (`y` < 2 OR `x` <= 2) AND `y` > 3.14""").get shouldEqual
-        Leaf(
-          Leaf(
-            Expression("x", Ne, 1), 
-            Leaf(
-              Expression("y", Lt, 2), 
-              Expression("x", Lte, 2), 
+        CompositeExpr(
+          CompositeExpr(
+            BinaryExpr("x", Ne, 1), 
+            CompositeExpr(
+              BinaryExpr("y", Lt, 2), 
+              BinaryExpr("x", Lte, 2), 
               Or
             ), 
             And
           ), 
-          Expression("y", Gt, 3.14), And
+          BinaryExpr("y", Gt, 3.14), And
         )
     }
   }
