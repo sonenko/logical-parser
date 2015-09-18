@@ -34,7 +34,7 @@ object Build extends Build {
 
   val commonSettings = Seq(
     organization := "com.github.sonenko",
-    description := "",
+    description := "expression parser that can convert sql-like expressions to scala case classes",
     updateOptions := updateOptions.value withCachedResolution true,
     scalaVersion := "2.11.7",
     licenses := Seq(("Apache License, Version 2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))),
