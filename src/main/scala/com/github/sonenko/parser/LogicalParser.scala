@@ -20,10 +20,30 @@ sealed trait AndOr
 case object And extends AndOr
 case object Or extends AndOr
 
-sealed trait Expr
-case object Empty extends Expr
-case class BinaryExpr[T](field: String, eqOp: EqOp, value: T) extends Expr
-case class CompositeExpr(left: Expr, right: Expr, andOr: AndOr) extends Expr
+sealed trait Expr {
+  def map(f: BinaryExpr => BinaryExpr): Expr
+  def filter(f: BinaryExpr => Boolean): Expr
+}
+case object Empty extends Expr {
+  override def map(f: BinaryExpr => BinaryExpr): Expr = Empty
+  override def filter(f: BinaryExpr => Boolean): Expr = Empty
+}
+case class BinaryExpr(field: String, eqOp: EqOp, value: Any) extends Expr {
+  override def map(f: BinaryExpr => BinaryExpr): Expr = f(this)
+  override def filter(f: BinaryExpr => Boolean): Expr = if (f(this)) this else Empty
+}
+case class CompositeExpr(left: Expr, right: Expr, andOr: AndOr) extends Expr {
+  override def map(f: BinaryExpr => BinaryExpr): Expr = CompositeExpr(left.map(f), right.map(f), andOr)
+  override def filter(f: BinaryExpr => Boolean): Expr = 
+    rebuild(CompositeExpr(left.filter(f), right.filter(f), andOr))
+  
+  private def rebuild(cmp: CompositeExpr): Expr = cmp match {
+    case CompositeExpr(Empty, Empty, _) => Empty
+    case CompositeExpr(Empty, r, _) => r
+    case CompositeExpr(l, Empty, _) => l
+    case x: CompositeExpr => x
+  }
+}
 
 object LogicalParser extends RegexParsers with JavaTokenParsers {
   
