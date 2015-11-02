@@ -23,29 +23,30 @@ case object Or extends AndOr
 sealed trait Expr {
   def map(f: BinaryExpr => BinaryExpr): Expr
   def filter(f: BinaryExpr => Boolean): Expr
-  def add(expr: BinaryExpr, andOr: AndOr): Expr
+  def concat(expr: Expr, andOr: AndOr): Expr
+
+  protected def rebuild(cmp: Expr): Expr = cmp match {
+    case CompositeExpr(Empty, Empty, _) => Empty
+    case CompositeExpr(Empty, r, _) => rebuild(r)
+    case CompositeExpr(l, Empty, _) => rebuild(l)
+    case x => x
+  }
 }
 case object Empty extends Expr {
   override def map(f: BinaryExpr => BinaryExpr): Expr = Empty
   override def filter(f: BinaryExpr => Boolean): Expr = Empty
-  override def add(expr: BinaryExpr, andOr: AndOr): Expr = expr
+  override def concat(expr: Expr, andOr: AndOr): Expr = expr
 }
 case class BinaryExpr(field: String, eqOp: EqOp, value: Any) extends Expr {
   override def map(f: BinaryExpr => BinaryExpr): Expr = f(this)
   override def filter(f: BinaryExpr => Boolean): Expr = if (f(this)) this else Empty
-  override def add(expr: BinaryExpr, andOr: AndOr): Expr = CompositeExpr(expr, this, andOr)
+  override def concat(expr: Expr, andOr: AndOr): Expr = rebuild(CompositeExpr(expr, this, andOr))
 }
 case class CompositeExpr(left: Expr, right: Expr, andOr: AndOr) extends Expr {
   override def map(f: BinaryExpr => BinaryExpr): Expr = CompositeExpr(left.map(f), right.map(f), andOr)
   override def filter(f: BinaryExpr => Boolean): Expr = 
     rebuild(CompositeExpr(left.filter(f), right.filter(f), andOr))
-  override def add(expr: BinaryExpr, andOr: AndOr): Expr = CompositeExpr(expr, this, andOr)
-  private def rebuild(cmp: CompositeExpr): Expr = cmp match {
-    case CompositeExpr(Empty, Empty, _) => Empty
-    case CompositeExpr(Empty, r, _) => r
-    case CompositeExpr(l, Empty, _) => l
-    case x: CompositeExpr => x
-  }
+  override def concat(expr: Expr, andOr: AndOr): Expr = rebuild(CompositeExpr(expr, this, andOr))
 }
 
 object LogicalParser extends RegexParsers with JavaTokenParsers {
