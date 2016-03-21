@@ -24,6 +24,7 @@ sealed trait Expr {
   def map(f: BinaryExpr => BinaryExpr): Expr
   def filter(f: BinaryExpr => Boolean): Expr
   def concat(expr: Expr, andOr: AndOr): Expr
+  def length: Int
 
   protected def rebuild(cmp: Expr): Expr = cmp match {
     case CompositeExpr(Empty, Empty, _) => Empty
@@ -36,26 +37,31 @@ case object Empty extends Expr {
   override def map(f: BinaryExpr => BinaryExpr): Expr = Empty
   override def filter(f: BinaryExpr => Boolean): Expr = Empty
   override def concat(expr: Expr, andOr: AndOr): Expr = expr
+  override val length: Int = 1
 }
 case class BinaryExpr(field: String, eqOp: EqOp, value: Any) extends Expr {
   override def map(f: BinaryExpr => BinaryExpr): Expr = f(this)
   override def filter(f: BinaryExpr => Boolean): Expr = if (f(this)) this else Empty
   override def concat(expr: Expr, andOr: AndOr): Expr = rebuild(CompositeExpr(expr, this, andOr))
+  override val length: Int = 1
 }
 case class CompositeExpr(left: Expr, right: Expr, andOr: AndOr) extends Expr {
   override def map(f: BinaryExpr => BinaryExpr): Expr = CompositeExpr(left.map(f), right.map(f), andOr)
   override def filter(f: BinaryExpr => Boolean): Expr = 
     rebuild(CompositeExpr(left.filter(f), right.filter(f), andOr))
   override def concat(expr: Expr, andOr: AndOr): Expr = rebuild(CompositeExpr(expr, this, andOr))
+  override val length = left.length + right.length
 }
 
 object LogicalParser extends RegexParsers with JavaTokenParsers {
   
   def fieldNameReg: Regex = """`\w+(?:\.\w+)?(?:\.\w+)?(?:\.\w+)?(?:\.\w+)?`""".r
+  def booleanReg: Regex = """(true)|(false)""".r
   def fieldName: Parser[String] = fieldNameReg ^^ {x => x.slice(1, x.length - 1)}
   def stringValue = stringLiteral ^^ {x => x.slice(1, x.length - 1)}
   def doubleValue: Parser[Double] = """(\d+\.\d+)""".r ^^ {_.toDouble}
   def longValue: Parser[Long] = wholeNumber ^^ {_.toLong}
+  def boolValue: Parser[Boolean] = booleanReg ^^ {_.toBoolean}
   def eqReg = """(==)|(!=)|(<=)|(>=)|(<)|(>)""".r
   def eq: Parser[EqOp] = eqReg ^^ EqOp.withName
   def or : Parser[AndOr]= """(?i)(OR)""".r ^^ (x => Or)
@@ -75,7 +81,7 @@ object LogicalParser extends RegexParsers with JavaTokenParsers {
 
   def bracketsStep: Parser[Expr] = expStep | "(" ~> orStep <~ ")" | ("^$".r ^^ (_ => Empty))
   
-  def expStep = (fieldName ~ eq ~ (stringValue | doubleValue | longValue)) ^^ {
+  def expStep = (fieldName ~ eq ~ (stringValue | doubleValue | longValue | boolValue)) ^^ {
     case field ~ eq ~ value => BinaryExpr(field = field, eqOp = eq, value = value)
   }
   def toStructures(str: String): ParseResult[Expr] = parseAll(orStep, str)

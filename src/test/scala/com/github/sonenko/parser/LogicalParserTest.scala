@@ -11,6 +11,19 @@ class LogicalParserTest extends Specification {
     def testRegOk(str: String)(implicit reg: Regex) = reg.findAllIn(str).toList shouldEqual List(str)
   }
   
+  "booleanReg" should {
+    "hate no boolean" in new TestScope {
+      implicit val reg = LogicalParser.booleanReg
+      testRegHate("")
+      testRegHate("True")
+    }
+    "satisfy booleans" in new TestScope {
+      implicit val reg = LogicalParser.booleanReg
+      testRegOk("true")
+      testRegOk("false")
+    }
+  }
+  
   "fieldNameReg" should {
     "hate incorrect fields" in new TestScope {
       implicit val reg = LogicalParser.fieldNameReg
@@ -56,6 +69,7 @@ class LogicalParserTest extends Specification {
   "toTree" should {
     "work in happy case" in {
       LogicalParser.toStructures("").get shouldEqual Empty
+      LogicalParser.toStructures("""`true` == false""").get shouldEqual BinaryExpr("true", Eq, false)
       LogicalParser.toStructures("""`x` == 20.1""").get shouldEqual BinaryExpr("x", Eq, 20.1)
       LogicalParser.toStructures("""`x` == "20.0"""").get shouldEqual BinaryExpr("x", Eq, "20.0")
       LogicalParser.toStructures("""`x` == "" """).get shouldEqual BinaryExpr("x", Eq, "")
