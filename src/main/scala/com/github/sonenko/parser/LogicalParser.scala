@@ -25,6 +25,8 @@ sealed trait Expr {
   def filter(f: BinaryExpr => Boolean): Expr
   def concat(expr: Expr, andOr: AndOr): Expr
   def length: Int
+  def isEmpty: Boolean
+  def nonEmpty: Boolean
 
   protected def rebuild(cmp: Expr): Expr = cmp match {
     case CompositeExpr(Empty, Empty, _) => Empty
@@ -37,13 +39,17 @@ case object Empty extends Expr {
   override def map(f: BinaryExpr => BinaryExpr): Expr = Empty
   override def filter(f: BinaryExpr => Boolean): Expr = Empty
   override def concat(expr: Expr, andOr: AndOr): Expr = expr
-  override val length: Int = 1
+  override val length: Int = 0
+  override val isEmpty = true
+  override val nonEmpty = false
 }
 case class BinaryExpr(field: String, eqOp: EqOp, value: Any) extends Expr {
   override def map(f: BinaryExpr => BinaryExpr): Expr = f(this)
   override def filter(f: BinaryExpr => Boolean): Expr = if (f(this)) this else Empty
   override def concat(expr: Expr, andOr: AndOr): Expr = rebuild(CompositeExpr(expr, this, andOr))
   override val length: Int = 1
+  override val isEmpty = false
+  override val nonEmpty = true
 }
 case class CompositeExpr(left: Expr, right: Expr, andOr: AndOr) extends Expr {
   override def map(f: BinaryExpr => BinaryExpr): Expr = CompositeExpr(left.map(f), right.map(f), andOr)
@@ -51,6 +57,8 @@ case class CompositeExpr(left: Expr, right: Expr, andOr: AndOr) extends Expr {
     rebuild(CompositeExpr(left.filter(f), right.filter(f), andOr))
   override def concat(expr: Expr, andOr: AndOr): Expr = rebuild(CompositeExpr(expr, this, andOr))
   override val length = left.length + right.length
+  override val isEmpty = length == 0
+  override val nonEmpty = !isEmpty
 }
 
 object LogicalParser extends RegexParsers with JavaTokenParsers {

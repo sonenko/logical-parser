@@ -72,4 +72,15 @@ class ExprTest extends Specification {
       branch.filter(_.field == "field1") shouldEqual leaf1
     }
   }
+  
+  "length" should {
+    "return number of BinaryExpr" in {
+      BinaryExpr("field1", Eq, 1).length shouldEqual 1
+      Empty.length shouldEqual 0
+      CompositeExpr(Empty, Empty, And).length shouldEqual 0
+      CompositeExpr(BinaryExpr("1", Eq, 1), Empty, And).length shouldEqual 1
+      CompositeExpr(BinaryExpr("1", Eq, 1), BinaryExpr("1", Eq, 1), And).length shouldEqual 2
+      CompositeExpr(CompositeExpr(BinaryExpr("1", Eq, 1), BinaryExpr("1", Eq, 1), And), BinaryExpr("1", Eq, 1), And).length shouldEqual 3
+    }
+  }
 }
