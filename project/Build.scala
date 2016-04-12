@@ -48,9 +48,7 @@ object Build extends Build {
 
   lazy val parser = (project in file("."))
     .settings(libraryDependencies ++= Seq(
-      log.logback, log.scalaloggingSlf4j, log.jclOverSlf4j, log.julToSlf4j, log.log4jOverSlf4j, log.slf4jApi,
-      typesafe.config, scalaParserCombinators,
-      tests.specs2, tests.mockito
+      scalaParserCombinators, tests.specs2, tests.mockito
     ))
     .settings(commonSettings ++ releaseSettings ++ mSettings:_*)
 }
