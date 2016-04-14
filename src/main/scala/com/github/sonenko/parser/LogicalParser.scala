@@ -21,7 +21,8 @@ case object And extends AndOr
 case object Or extends AndOr
 
 sealed trait Expr {
-  def map(f: BinaryExpr => BinaryExpr): Expr
+  def walk(f: BinaryExpr => BinaryExpr): Expr
+  def toList: List[BinaryExpr]
   def filter(f: BinaryExpr => Boolean): Expr
   def concat(expr: Expr, andOr: AndOr): Expr
   def length: Int
@@ -36,7 +37,8 @@ sealed trait Expr {
   }
 }
 case object Empty extends Expr {
-  override def map(f: BinaryExpr => BinaryExpr): Expr = Empty
+  override def walk(f: BinaryExpr => BinaryExpr): Expr = Empty
+  override def toList: List[BinaryExpr] = Nil
   override def filter(f: BinaryExpr => Boolean): Expr = Empty
   override def concat(expr: Expr, andOr: AndOr): Expr = expr
   override val length: Int = 0
@@ -44,7 +46,8 @@ case object Empty extends Expr {
   override val nonEmpty = false
 }
 case class BinaryExpr(field: String, eqOp: EqOp, value: Any) extends Expr {
-  override def map(f: BinaryExpr => BinaryExpr): Expr = f(this)
+  override def walk(f: BinaryExpr => BinaryExpr): Expr = f(this)
+  override def toList: List[BinaryExpr] = List(BinaryExpr(field: String, eqOp: EqOp, value: Any))
   override def filter(f: BinaryExpr => Boolean): Expr = if (f(this)) this else Empty
   override def concat(expr: Expr, andOr: AndOr): Expr = rebuild(CompositeExpr(expr, this, andOr))
   override val length: Int = 1
@@ -52,7 +55,18 @@ case class BinaryExpr(field: String, eqOp: EqOp, value: Any) extends Expr {
   override val nonEmpty = true
 }
 case class CompositeExpr(left: Expr, right: Expr, andOr: AndOr) extends Expr {
-  override def map(f: BinaryExpr => BinaryExpr): Expr = CompositeExpr(left.map(f), right.map(f), andOr)
+  override def walk(f: BinaryExpr => BinaryExpr): Expr = CompositeExpr(left.walk(f), right.walk(f), andOr)
+  override def toList: List[BinaryExpr] = (left, right) match {
+    case (Empty, Empty) => Nil
+    case (Empty, y: BinaryExpr) => List(y, y)
+    case (Empty, y: CompositeExpr) => y.toList
+    case (x: BinaryExpr, Empty) => List(x)
+    case (x: BinaryExpr, y: BinaryExpr) => List(x, y)
+    case (x: BinaryExpr, y: CompositeExpr) => y.toList ::: List(x)
+    case (x: CompositeExpr, Empty) => x.toList
+    case (x: CompositeExpr, y: BinaryExpr) => x.toList ::: List(y)
+    case (x: CompositeExpr, y: CompositeExpr) => y.toList ::: y.toList
+  }
   override def filter(f: BinaryExpr => Boolean): Expr = 
     rebuild(CompositeExpr(left.filter(f), right.filter(f), andOr))
   override def concat(expr: Expr, andOr: AndOr): Expr = rebuild(CompositeExpr(expr, this, andOr))
