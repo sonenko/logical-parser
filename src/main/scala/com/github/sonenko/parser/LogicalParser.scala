@@ -54,6 +54,9 @@ case class BinaryExpr(field: String, eqOp: EqOp, value: Any) extends Expr {
   override val isEmpty = false
   override val nonEmpty = true
 }
+
+case object Null
+
 case class CompositeExpr(left: Expr, right: Expr, andOr: AndOr) extends Expr {
   override def walk(f: BinaryExpr => BinaryExpr): Expr = CompositeExpr(left.walk(f), right.walk(f), andOr)
   override def toList: List[BinaryExpr] = (left, right) match {
@@ -79,11 +82,13 @@ object LogicalParser extends RegexParsers with JavaTokenParsers {
   
   def fieldNameReg: Regex = """`\w+(?:\.\w+)?(?:\.\w+)?(?:\.\w+)?(?:\.\w+)?`""".r
   def booleanReg: Regex = """(true)|(false)""".r
+  def nullReg: Regex = """(null)""".r
   def fieldName: Parser[String] = fieldNameReg ^^ {x => x.slice(1, x.length - 1)}
   def stringValue = stringLiteral ^^ {x => x.slice(1, x.length - 1)}
   def doubleValue: Parser[Double] = """(\d+\.\d+)""".r ^^ {_.toDouble}
   def longValue: Parser[Long] = wholeNumber ^^ {_.toLong}
   def boolValue: Parser[Boolean] = booleanReg ^^ {_.toBoolean}
+  def nullValue: Parser[Null.type] = nullReg ^^ {_ => Null}
   def eqReg = """(==)|(!=)|(<=)|(>=)|(<)|(>)""".r
   def eq: Parser[EqOp] = eqReg ^^ EqOp.withName
   def or : Parser[AndOr]= """(?i)(OR)""".r ^^ (x => Or)
@@ -103,7 +108,7 @@ object LogicalParser extends RegexParsers with JavaTokenParsers {
 
   def bracketsStep: Parser[Expr] = expStep | "(" ~> orStep <~ ")" | ("^$".r ^^ (_ => Empty))
   
-  def expStep = (fieldName ~ eq ~ (stringValue | doubleValue | longValue | boolValue)) ^^ {
+  def expStep = (fieldName ~ eq ~ (stringValue | doubleValue | longValue | boolValue | nullValue)) ^^ {
     case field ~ eq ~ value => BinaryExpr(field = field, eqOp = eq, value = value)
   }
   def toStructures(str: String): ParseResult[Expr] = parseAll(orStep, str)

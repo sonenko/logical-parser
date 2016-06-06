@@ -66,6 +66,20 @@ class LogicalParserTest extends Specification {
     }
   }
   
+  "nullReq" should {
+    "find nulls" in new TestScope {
+      implicit val reg = LogicalParser.nullReg
+      testRegOk("null")
+    }
+    "hate non nulls" in new TestScope {
+      implicit val reg = LogicalParser.nullReg
+      testRegHate("")      
+      testRegHate("1")      
+      testRegHate("==")      
+      testRegHate("Null")      
+    }
+  }
+  
   "toTree" should {
     "work in happy case" in {
       LogicalParser.toStructures("").get shouldEqual Empty
@@ -73,6 +87,7 @@ class LogicalParserTest extends Specification {
       LogicalParser.toStructures("""`x` == 20.1""").get shouldEqual BinaryExpr("x", Eq, 20.1)
       LogicalParser.toStructures("""`x` == "20.0"""").get shouldEqual BinaryExpr("x", Eq, "20.0")
       LogicalParser.toStructures("""`x` == "" """).get shouldEqual BinaryExpr("x", Eq, "")
+      LogicalParser.toStructures("""`x` == null """).get shouldEqual BinaryExpr("x", Eq, Null)
       LogicalParser.toStructures("""`x` == 1 AND `y` != 2 """).get shouldEqual 
         CompositeExpr(
           BinaryExpr("x", Eq, 1),
